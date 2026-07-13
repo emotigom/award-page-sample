@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>나의 첫 HTML 페이지</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero" aria-labelledby="pageTitle">
+        <!-- 미션 1: 배지 문구를 나의 주제에 맞게 바꾸기 -->
+        <p class="badge" data-slot="p5.badge">Gomdory HTML 5차시</p>
+
+        <!-- 미션 2: 제목 글자만 나의 페이지 제목으로 바꾸기 -->
+        <h1 id="pageTitle" data-slot="p5.title">나의 첫 HTML 페이지</h1>
+
+        <!-- 미션 3: 한 문장 소개를 안전하게 바꾸기. 이름, 학교, 전화번호, 주소는 쓰지 않기 -->
+        <p class="lead" data-slot="p5.lead">나는 오늘 나를 소개하는 밝은 웹페이지를 만들어요.</p>
+
+        <!-- 미션 4: 버튼 문구를 바꾸고 미리보기에서 눌러 보기 -->
+        <button type="button" id="messageButton" data-slot="p5.button">응원 메시지 보기</button>
+      </section>
+
+      <section class="profile-card" aria-label="프로필 카드">
+        <!-- 미션 5: 실제 이름 대신 별명이나 캐릭터 이름 쓰기 -->
+        <div class="avatar" aria-hidden="true">🌟</div>
+        <div>
+          <p class="label">nickname</p>
+          <h2 data-slot="p5.profile.name">반짝 코더</h2>
+          <p data-slot="p5.profile.slogan">작은 태그부터 차근차근 완성해요.</p>
+        </div>
+      </section>
+
+      <section class="mission-grid" aria-label="나를 소개하는 카드 세 개">
+        <article class="info-card">
+          <!-- 미션 6: 관심사 카드의 제목과 내용을 바꾸기 -->
+          <h3 data-slot="p5.cards.1.title">나의 관심사</h3>
+          <p data-slot="p5.cards.1.body">그림 그리기와 재미있는 웹페이지 구경을 좋아해요.</p>
+        </article>
+        <article class="info-card">
+          <!-- 미션 7: 오늘 목표 카드의 제목과 내용을 바꾸기 -->
+          <h3 data-slot="p5.cards.2.title">오늘의 목표</h3>
+          <p data-slot="p5.cards.2.body">제목, 문장, 카드를 직접 고쳐서 내 페이지처럼 만들 거예요.</p>
+        </article>
+        <article class="info-card">
+          <!-- 미션 8: 좋아하는 것 카드의 제목과 내용을 바꾸기 -->
+          <h3 data-slot="p5.cards.3.title">좋아하는 것</h3>
+          <p data-slot="p5.cards.3.body">따뜻한 색, 귀여운 아이콘, 짧고 분명한 문장을 좋아해요.</p>
+        </article>
+      </section>
+
+      <section class="highlight" aria-label="페이지 분위기">
+        <div class="highlight-icon" aria-hidden="true">🎨</div>
+        <div>
+          <!-- 미션 9: 사진 대신 색과 이모지로 분위기를 표현하기 -->
+          <h2 data-slot="p5.highlight.title">나의 페이지 분위기</h2>
+          <p data-slot="p5.highlight.desc">햇살처럼 밝고, 친구가 편하게 읽을 수 있는 느낌으로 꾸몄어요.</p>
+        </div>
+      </section>
+
+      <section class="message-box" aria-live="polite">
+        <!-- 미션 10: 버튼을 눌렀을 때 보일 응원 메시지 바꾸기 -->
+        <p id="messageText" data-slot="p5.message">버튼을 누르면 나만의 응원 메시지가 보여요.</p>
+      </section>
+
+      <!-- 미션 11: 마지막 문장을 짧게 바꾸기 -->
+      <footer data-slot="p5.footer">끝까지 읽어 줘서 고마워요.</footer>
+    </main>
+    <script src="script.js"></script>
+  </body>
+</html>

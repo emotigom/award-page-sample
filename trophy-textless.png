@@ -1,0 +1,376 @@
+const cameraView = document.querySelector("#cameraView");
+const photoCanvas = document.querySelector("#photoCanvas");
+const startCameraButton = document.querySelector("#startCameraButton");
+const takePhotoButton = document.querySelector("#takePhotoButton");
+const saveButton = document.querySelector("#saveButton");
+const statusText = document.querySelector("#statusText");
+const statusCard = document.querySelector(".status-card");
+const appTitle = document.querySelector("#appTitle");
+const appSubtitle = document.querySelector("#appSubtitle");
+const cardTitle = document.querySelector("#cardTitle");
+const cardMessage = document.querySelector("#cardMessage");
+const themeOptions = document.querySelector("#themeOptions");
+const filterOptions = document.querySelector("#filterOptions");
+const frameOptions = document.querySelector("#frameOptions");
+
+const ctx = photoCanvas.getContext("2d");
+
+let stream = null;
+let capturedImage = null;
+let selectedTheme = "student";
+let selectedFilter = "natural";
+let selectedFrame = "gold";
+
+const imageAssets = {
+  stage: loadImage("assets/stage-camera-ring-textless.png"),
+  trophy: loadImage("assets/trophy-textless.png")
+};
+
+// 학생 수정 포인트 1: 주제 버튼을 눌렀을 때 바뀌는 문구와 포인트 색입니다.
+const themePresets = {
+  student: {
+    appTitle: "나만의 AI 포토카드",
+    appSubtitle: "무대 조명 속 주인공처럼 촬영하고, 보정하고, 저장해 봐요.",
+    cardTitle: "올해의 중학생",
+    cardMessage: "오늘의 노력과 성장을 담은 포토카드",
+    accent: "#ffe08a"
+  },
+  player: {
+    appTitle: "AI Player Card Lab",
+    appSubtitle: "최고의 순간을 스포츠 카드처럼 완성해 봐요.",
+    cardTitle: "최고의 플레이어",
+    cardMessage: "팀을 빛낸 오늘의 하이라이트",
+    accent: "#8fe7ff"
+  },
+  parents: {
+    appTitle: "Thank You Photo Card Lab",
+    appSubtitle: "감사한 마음을 시상식 포토카드로 전해 봐요.",
+    cardTitle: "사랑하는 부모님",
+    cardMessage: "늘 응원해 주셔서 감사합니다",
+    accent: "#fb8fd0"
+  },
+  mvp: {
+    appTitle: "Class MVP Photo Card",
+    appSubtitle: "우리 반의 빛나는 순간을 카드 한 장에 담아 봐요.",
+    cardTitle: "우리 반 MVP",
+    cardMessage: "함께해서 더 멋진 오늘의 주인공",
+    accent: "#7cf8d8"
+  }
+};
+
+// 학생 수정 포인트 2: 보정 이름은 index.html에서, 실제 효과는 여기에서 바꿉니다.
+const filters = {
+  natural: "none",
+  bright: "brightness(1.18) contrast(1.04) saturate(1.12)",
+  sharp: "contrast(1.18) saturate(1.25)",
+  mono: "grayscale(1) contrast(1.12)"
+};
+
+// 학생 수정 포인트 3: 프레임 색, 이름, 카드 안 라벨을 바꿀 수 있습니다.
+const frames = {
+  gold: {
+    border: "#ffe08a",
+    glow: "rgba(255, 224, 138, 0.52)",
+    band: "rgba(12, 8, 10, 0.88)",
+    accent: "#ffe08a",
+    label: "SPARK PHOTO CARD"
+  },
+  stage: {
+    border: "#fb8fd0",
+    glow: "rgba(251, 143, 208, 0.5)",
+    band: "rgba(38, 9, 28, 0.88)",
+    accent: "#fb8fd0",
+    label: "STAGE LIGHT PHOTO"
+  },
+  cyan: {
+    border: "#8fe7ff",
+    glow: "rgba(143, 231, 255, 0.5)",
+    band: "rgba(5, 25, 35, 0.88)",
+    accent: "#8fe7ff",
+    label: "STAR CARD FRAME"
+  }
+};
+
+function loadImage(src) {
+  const image = new Image();
+  image.src = src;
+  image.addEventListener("load", renderCard);
+  return image;
+}
+
+async function startCamera() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "user" },
+      audio: false
+    });
+
+    cameraView.srcObject = stream;
+    statusText.textContent = "카메라 준비 완료";
+    statusCard.classList.add("is-ready");
+  } catch (error) {
+    statusText.textContent = "카메라 권한을 확인해 주세요";
+    statusCard.classList.remove("is-ready");
+    console.error(error);
+  }
+}
+
+function takePhoto() {
+  if (!stream) {
+    statusText.textContent = "먼저 카메라를 켜 주세요";
+    return;
+  }
+
+  capturedImage = document.createElement("canvas");
+  capturedImage.width = cameraView.videoWidth || 900;
+  capturedImage.height = cameraView.videoHeight || 1200;
+
+  const imageCtx = capturedImage.getContext("2d");
+  imageCtx.translate(capturedImage.width, 0);
+  imageCtx.scale(-1, 1);
+  imageCtx.drawImage(cameraView, 0, 0, capturedImage.width, capturedImage.height);
+
+  statusText.textContent = "사진을 찍었어요";
+  renderCard();
+}
+
+function drawRoundRect(x, y, width, height, radius) {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + width - radius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+  ctx.lineTo(x + width, y + height - radius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  ctx.lineTo(x + radius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+}
+
+function fillRoundRect(x, y, width, height, radius, color) {
+  ctx.fillStyle = color;
+  drawRoundRect(x, y, width, height, radius);
+  ctx.fill();
+}
+
+function strokeRoundRect(x, y, width, height, radius, color, lineWidth) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lineWidth;
+  drawRoundRect(x, y, width, height, radius);
+  ctx.stroke();
+}
+
+function drawCoverImage(source, x, y, width, height) {
+  const scale = Math.max(width / source.width, height / source.height);
+  const drawWidth = source.width * scale;
+  const drawHeight = source.height * scale;
+  const drawX = x + (width - drawWidth) / 2;
+  const drawY = y + (height - drawHeight) / 2;
+  ctx.drawImage(source, drawX, drawY, drawWidth, drawHeight);
+}
+
+function drawTextLines(text, x, y, maxWidth, lineHeight, maxLines) {
+  const words = String(text).split(" ");
+  const lines = [];
+  let line = "";
+
+  function pushLongWord(word) {
+    let piece = "";
+    Array.from(word).forEach((char) => {
+      const testPiece = piece + char;
+      if (ctx.measureText(testPiece).width > maxWidth && piece) {
+        lines.push(piece);
+        piece = char;
+      } else {
+        piece = testPiece;
+      }
+    });
+    return piece;
+  }
+
+  words.forEach((word) => {
+    const testLine = line ? `${line} ${word}` : word;
+    if (ctx.measureText(word).width > maxWidth) {
+      if (line) lines.push(line);
+      line = pushLongWord(word);
+    } else if (ctx.measureText(testLine).width > maxWidth && line) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = testLine;
+    }
+  });
+
+  if (line) lines.push(line);
+  lines.slice(0, maxLines).forEach((item, index) => {
+    ctx.fillText(item, x, y + index * lineHeight);
+  });
+}
+
+function drawBackground(frame) {
+  const stage = imageAssets.stage;
+
+  if (stage.complete && stage.naturalWidth > 0) {
+    drawCoverImage(stage, 0, 0, photoCanvas.width, photoCanvas.height);
+  } else {
+    const gradient = ctx.createLinearGradient(0, 0, photoCanvas.width, photoCanvas.height);
+    gradient.addColorStop(0, "#09030b");
+    gradient.addColorStop(0.5, "#2a0715");
+    gradient.addColorStop(1, "#050308");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, photoCanvas.width, photoCanvas.height);
+  }
+
+  ctx.fillStyle = "rgba(0, 0, 0, 0.42)";
+  ctx.fillRect(0, 0, photoCanvas.width, photoCanvas.height);
+
+  ctx.save();
+  ctx.shadowColor = frame.glow;
+  ctx.shadowBlur = 54;
+  strokeRoundRect(42, 42, 816, 1116, 44, frame.border, 10);
+  ctx.restore();
+}
+
+function drawPortraitArea(frame) {
+  fillRoundRect(96, 118, 708, 742, 48, "rgba(3, 7, 18, 0.62)");
+  strokeRoundRect(96, 118, 708, 742, 48, "rgba(255, 255, 255, 0.22)", 2);
+
+  ctx.save();
+  drawRoundRect(116, 138, 668, 702, 38);
+  ctx.clip();
+
+  if (capturedImage) {
+    ctx.filter = filters[selectedFilter];
+    drawCoverImage(capturedImage, 116, 138, 668, 702);
+    ctx.filter = "none";
+  } else {
+    const placeholder = ctx.createLinearGradient(116, 138, 784, 840);
+    placeholder.addColorStop(0, "rgba(255, 224, 138, 0.14)");
+    placeholder.addColorStop(0.55, "rgba(251, 143, 208, 0.12)");
+    placeholder.addColorStop(1, "rgba(143, 231, 255, 0.16)");
+    ctx.fillStyle = placeholder;
+    ctx.fillRect(116, 138, 668, 702);
+    ctx.fillStyle = "rgba(255, 247, 223, 0.86)";
+    ctx.font = "900 34px Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("사진을 찍으면 카드가 완성돼요", 450, 498);
+  }
+
+  ctx.restore();
+
+  ctx.fillStyle = frame.accent;
+  ctx.globalAlpha = 0.9;
+  [140, 760].forEach((x) => {
+    ctx.beginPath();
+    ctx.arc(x, 164, 8, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+}
+
+function drawTrophy(frame) {
+  const trophy = imageAssets.trophy;
+
+  if (trophy.complete && trophy.naturalWidth > 0) {
+    ctx.save();
+    ctx.globalAlpha = 0.92;
+    ctx.drawImage(trophy, 640, 890, 156, 206);
+    ctx.restore();
+  } else {
+    ctx.fillStyle = frame.accent;
+    ctx.font = "900 80px Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("★", 720, 1010);
+  }
+}
+
+function renderCard() {
+  const frame = frames[selectedFrame];
+  const theme = themePresets[selectedTheme];
+
+  ctx.clearRect(0, 0, photoCanvas.width, photoCanvas.height);
+  drawBackground(frame);
+  drawPortraitArea(frame);
+
+  fillRoundRect(86, 888, 728, 236, 34, frame.band);
+  strokeRoundRect(86, 888, 728, 236, 34, "rgba(255, 255, 255, 0.2)", 2);
+
+  ctx.fillStyle = frame.accent;
+  ctx.textAlign = "left";
+  ctx.font = "900 24px Arial, sans-serif";
+  ctx.fillText(frame.label, 128, 938);
+
+  ctx.fillStyle = "#fff7df";
+  ctx.font = "900 58px Arial, sans-serif";
+  drawTextLines(cardTitle.value || theme.cardTitle, 128, 1004, 470, 62, 1);
+
+  ctx.fillStyle = "rgba(255, 247, 223, 0.82)";
+  ctx.font = "700 30px Arial, sans-serif";
+  drawTextLines(cardMessage.value || theme.cardMessage, 128, 1056, 460, 38, 2);
+
+  drawTrophy(frame);
+
+  ctx.fillStyle = theme.accent;
+  ctx.font = "900 22px Arial, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("AI Photo Card Lab Mini App", 450, 82);
+}
+
+function selectOption(group, optionName, value) {
+  group.querySelectorAll(".option").forEach((button) => {
+    button.classList.toggle("is-selected", button.dataset[optionName] === value);
+  });
+}
+
+function applyTheme(themeName) {
+  const theme = themePresets[themeName];
+  if (!theme) return;
+
+  selectedTheme = themeName;
+  appTitle.textContent = theme.appTitle;
+  appSubtitle.textContent = theme.appSubtitle;
+  cardTitle.value = theme.cardTitle;
+  cardMessage.value = theme.cardMessage;
+  document.documentElement.style.setProperty("--accent", theme.accent);
+  selectOption(themeOptions, "theme", selectedTheme);
+  renderCard();
+}
+
+themeOptions.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-theme]");
+  if (!button) return;
+  applyTheme(button.dataset.theme);
+});
+
+filterOptions.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-filter]");
+  if (!button) return;
+
+  selectedFilter = button.dataset.filter;
+  selectOption(filterOptions, "filter", selectedFilter);
+  renderCard();
+});
+
+frameOptions.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-frame]");
+  if (!button) return;
+
+  selectedFrame = button.dataset.frame;
+  selectOption(frameOptions, "frame", selectedFrame);
+  renderCard();
+});
+
+cardTitle.addEventListener("input", renderCard);
+cardMessage.addEventListener("input", renderCard);
+startCameraButton.addEventListener("click", startCamera);
+takePhotoButton.addEventListener("click", takePhoto);
+
+saveButton.addEventListener("click", () => {
+  const link = document.createElement("a");
+  link.download = "ai-photo-card-lab-mini.png";
+  link.href = photoCanvas.toDataURL("image/png");
+  link.click();
+});
+
+applyTheme(selectedTheme);
