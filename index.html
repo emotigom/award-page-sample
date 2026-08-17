@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="카메라로 사진을 찍고 주제, 필터, 프레임을 골라 나만의 시상식 포토카드를 만드는 브라우저 앱"
+    />
+    <title>AI Photo Card Lab</title>
+    <link rel="preload" as="image" href="assets/stage-camera-ring-textless.png" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="AI Photo Card Lab 홈">
+        <span class="brand-mark" aria-hidden="true">★</span>
+        <span>AI Photo Card Lab</span>
+      </a>
+      <a class="license-link" href="LICENSE">MIT License</a>
+    </header>
+
+    <main id="top" class="page-shell">
+      <section class="intro" aria-labelledby="appTitle">
+        <p class="eyebrow">AWARD PHOTO EXPERIENCE</p>
+        <h1 id="appTitle">나만의 AI 포토카드</h1>
+        <p id="appSubtitle" class="intro-copy">
+          무대 조명 속 주인공처럼 촬영하고, 보정하고, 저장해 봐요.
+        </p>
+        <div class="privacy-note">
+          <span aria-hidden="true">●</span>
+          사진은 서버로 전송되지 않고 이 브라우저 안에서만 처리됩니다.
+        </div>
+      </section>
+
+      <section class="studio" aria-label="포토카드 제작 스튜디오">
+        <div class="stage-panel">
+          <div class="camera-card">
+            <div class="panel-heading">
+              <div>
+                <p class="step-label">STEP 1</p>
+                <h2>사진 촬영</h2>
+              </div>
+              <div class="status-card" role="status" aria-live="polite">
+                <span class="status-dot" aria-hidden="true"></span>
+                <span id="statusText">카메라를 준비해 주세요</span>
+              </div>
+            </div>
+
+            <div class="camera-frame">
+              <video id="cameraView" autoplay muted playsinline></video>
+              <div class="camera-placeholder" aria-hidden="true">
+                <span>CAMERA</span>
+                <strong>카메라를 켜면<br />미리보기가 나타납니다</strong>
+              </div>
+            </div>
+
+            <div class="camera-actions">
+              <button type="button" id="startCameraButton" class="button button-secondary">
+                카메라 켜기
+              </button>
+              <button type="button" id="takePhotoButton" class="button button-primary" disabled>
+                사진 찍기
+              </button>
+            </div>
+          </div>
+
+          <div class="result-card">
+            <div class="panel-heading">
+              <div>
+                <p class="step-label">PREVIEW</p>
+                <h2>완성 카드</h2>
+              </div>
+              <span class="canvas-size">900 × 1200</span>
+            </div>
+            <div class="canvas-wrap">
+              <canvas
+                id="photoCanvas"
+                width="900"
+                height="1200"
+                aria-label="완성된 포토카드 미리보기"
+              ></canvas>
+            </div>
+          </div>
+        </div>
+
+        <aside class="control-panel" aria-label="포토카드 꾸미기 설정">
+          <div class="control-heading">
+            <p class="step-label">STEP 2</p>
+            <h2>카드 꾸미기</h2>
+            <p>주제와 분위기를 고르고 문구를 바꿔 보세요.</p>
+          </div>
+
+          <fieldset class="control-group">
+            <legend>주제</legend>
+            <div id="themeOptions" class="option-grid option-grid-themes">
+              <button type="button" class="option is-selected" data-theme="student" aria-pressed="true">
+                성장
+              </button>
+              <button type="button" class="option" data-theme="player" aria-pressed="false">
+                플레이어
+              </button>
+              <button type="button" class="option" data-theme="parents" aria-pressed="false">
+                감사
+              </button>
+              <button type="button" class="option" data-theme="mvp" aria-pressed="false">
+                우리 반 MVP
+              </button>
+            </div>
+          </fieldset>
+
+          <fieldset class="control-group">
+            <legend>보정</legend>
+            <div id="filterOptions" class="option-grid">
+              <button type="button" class="option is-selected" data-filter="natural" aria-pressed="true">
+                자연스럽게
+              </button>
+              <button type="button" class="option" data-filter="bright" aria-pressed="false">
+                밝게
+              </button>
+              <button type="button" class="option" data-filter="sharp" aria-pressed="false">
+                선명하게
+              </button>
+              <button type="button" class="option" data-filter="mono" aria-pressed="false">
+                흑백
+              </button>
+            </div>
+          </fieldset>
+
+          <fieldset class="control-group">
+            <legend>프레임</legend>
+            <div id="frameOptions" class="option-grid option-grid-frames">
+              <button type="button" class="option is-selected" data-frame="gold" aria-pressed="true">
+                <span class="swatch swatch-gold" aria-hidden="true"></span>골드
+              </button>
+              <button type="button" class="option" data-frame="stage" aria-pressed="false">
+                <span class="swatch swatch-pink" aria-hidden="true"></span>핑크
+              </button>
+              <button type="button" class="option" data-frame="cyan" aria-pressed="false">
+                <span class="swatch swatch-cyan" aria-hidden="true"></span>시안
+              </button>
+            </div>
+          </fieldset>
+
+          <div class="control-group text-controls">
+            <label for="cardTitle">카드 제목</label>
+            <input id="cardTitle" type="text" maxlength="24" value="올해의 중학생" />
+
+            <label for="cardMessage">소개 문구</label>
+            <textarea id="cardMessage" rows="3" maxlength="64">오늘의 노력과 성장을 담은 포토카드</textarea>
+          </div>
+
+          <button type="button" id="saveButton" class="button button-save">
+            PNG로 저장하기
+          </button>
+        </aside>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>AI Photo Card Lab · 브라우저에서 안전하게 만드는 나만의 시상식 카드</p>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
