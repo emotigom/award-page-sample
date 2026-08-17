@@ -359,12 +359,23 @@ takePhotoButton.addEventListener("click", takePhoto);
 
 saveButton.addEventListener("click", () => {
   renderCard();
-  const date = new Date().toISOString().slice(0, 10);
-  const link = document.createElement("a");
-  link.download = `ai-photo-card-${date}.png`;
-  link.href = photoCanvas.toDataURL("image/png");
-  link.click();
-  setStatus("포토카드를 저장했습니다", true);
+  photoCanvas.toBlob((blob) => {
+    if (!blob) {
+      setStatus("이미지를 저장하지 못했습니다");
+      return;
+    }
+
+    const date = new Date().toISOString().slice(0, 10);
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.download = `ai-photo-card-${date}.png`;
+    link.href = downloadUrl;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+    setStatus("포토카드를 저장했습니다", true);
+  }, "image/png");
 });
 
 window.addEventListener("pagehide", stopCamera);
